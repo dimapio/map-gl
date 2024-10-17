@@ -1,14 +1,14 @@
 import React from "react";
 import { StoreApi, createStore, useStore } from "zustand";
-import { LayerOptions } from "@/types";
 import { removeLayer, syncLayers, updateLayer } from "@/utils/layerUtils";
 import { removeSource, syncSources, updateSource } from "@/utils/sourceUtils";
 import { Map, SourceSpecification } from "mapbox-gl";
+import { LayerProps } from "@/components/Layer";
 
 type MapState = {
   map: Map | null;
   sources: Record<string, SourceSpecification>;
-  layers: Record<string, LayerOptions>;
+  layers: Record<string, LayerProps>;
 };
 
 type MapActions = {
@@ -16,9 +16,9 @@ type MapActions = {
   init: (map: Map) => void;
   unload: () => void;
   // Layer actions
-  addLayer: (layer: LayerOptions) => void;
+  addLayer: (layer: LayerProps) => void;
   removeLayer: (layerId: string) => void;
-  updateLayer: (layer: LayerOptions, prevLayer: LayerOptions) => void;
+  updateLayer: (layer: LayerProps, prevLayer: LayerProps) => void;
   // Source actions
   addSource: (sourceId: string, source: SourceSpecification) => void;
   removeSource: (sourceId: string) => void;
@@ -63,7 +63,7 @@ export function createMapStore() {
     unload: () => set(defaultMapState),
     addLayer: (layer) => {
       set(({ map, layers }) => {
-        layers[layer.id] = layer;
+        layers[layer.options.id] = layer;
 
         // Sync layers with map
         if (map) {
@@ -88,18 +88,18 @@ export function createMapStore() {
     updateLayer: (layer, prevLayer) => {
       set(({ map, layers }) => {
         // Check if layer id changed
-        if (layer.id !== prevLayer.id) {
-          delete layers[prevLayer.id];
+        if (layer.options.id !== prevLayer.options.id) {
+          delete layers[prevLayer.options.id];
           if (map) {
-            removeLayer(map, prevLayer);
+            removeLayer(map, prevLayer.options);
           }
         }
 
         // Sync layers with map
-        layers[layer.id] = layer;
+        layers[layer.options.id] = layer;
         if (map) {
           syncLayers(map, layers);
-          updateLayer(map, layer.id, layer, prevLayer);
+          updateLayer(map, layer.options.id, layer, prevLayer);
         }
 
         return { layers };

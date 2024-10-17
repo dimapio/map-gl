@@ -14,9 +14,6 @@ export type PopupEvent = {
   point: Point;
   features: GeoJSONFeature[];
 };
-export type LayerOptions = LayerSpecification & {
-  beforeId?: string;
-};
 export type BBoxStyle = Omit<
   React.CSSProperties,
   "position" | "top" | "left" | "width" | "height"

@@ -1,6 +1,6 @@
-import { LayerOptions } from "@/types";
 import deepEqual from "./deepEqual";
 import { LayerSpecification, Map, CustomLayerInterface } from "mapbox-gl";
+import { LayerProps } from "@/components/Layer";
 
 // TODO: Update these to combine `options` and `beforeId` with custom `LayerOptions` type
 /** Get a `Layer` from the map or create one  */
@@ -31,16 +31,15 @@ export function removeLayer(map: Map, options: LayerSpecification) {
 export function updateLayer(
   map: Map,
   id: string,
-  props: LayerOptions,
-  prevProps: LayerOptions
+  props: LayerProps,
+  prevProps: LayerProps
 ) {
-  const { layout = {}, paint = {}, filter, minzoom, maxzoom, beforeId } = props;
-
-  if (beforeId !== prevProps.beforeId) {
-    map.moveLayer(id, beforeId);
+  if (props.beforeId !== prevProps.beforeId) {
+    map.moveLayer(id, props.beforeId);
   }
-  if (layout !== prevProps.layout) {
-    const prevLayout = prevProps.layout || {};
+  if (props.options.layout !== prevProps.options.layout) {
+    const layout = props.options.layout || {};
+    const prevLayout = prevProps.options.layout || {};
     for (const key in layout) {
       if (!deepEqual(layout[key], prevLayout[key])) {
         map.setLayoutProperty(id, key as any, layout[key]);
@@ -52,8 +51,9 @@ export function updateLayer(
       }
     }
   }
-  if (paint !== prevProps.paint) {
-    const prevPaint = prevProps.paint || {};
+  if (props.options.paint !== prevProps.options.paint) {
+    const paint = props.options.paint || {};
+    const prevPaint = prevProps.options.paint || {};
     for (const key in paint) {
       if (!deepEqual(paint[key], prevPaint[key])) {
         map.setPaintProperty(id, key as any, paint[key]);
@@ -66,22 +66,23 @@ export function updateLayer(
     }
   }
 
-  if (!deepEqual(filter, prevProps.filter)) {
-    map.setFilter(id, filter);
+  if (!deepEqual(props.options.filter, prevProps.options.filter)) {
+    map.setFilter(id, props.options.filter);
   }
   if (
-    minzoom &&
-    maxzoom &&
-    (minzoom !== prevProps.minzoom || maxzoom !== prevProps.maxzoom)
+    props.options.minzoom &&
+    props.options.maxzoom &&
+    (props.options.minzoom !== prevProps.options.minzoom ||
+      props.options.maxzoom !== prevProps.options.maxzoom)
   ) {
-    map.setLayerZoomRange(id, minzoom, maxzoom);
+    map.setLayerZoomRange(id, props.options.minzoom, props.options.maxzoom);
   }
 }
 
 /** Sync layers within the map */
-export function syncLayers(map: Map, layers: Record<string, LayerOptions>) {
+export function syncLayers(map: Map, layers: Record<string, LayerProps>) {
   // Add map layers with expected layers
-  Object.values(layers).forEach(({ beforeId, ...options }) => {
+  Object.values(layers).forEach(({ beforeId, options }) => {
     createLayer(map, options, beforeId);
   });
 
